@@ -938,7 +938,7 @@ function enterApp() {
   const root = $('app-root');
   splash.classList.add('hide');
   root.style.display = 'flex';
-  setTimeout(() => { splash.style.display = 'none'; }, 1000);
+  setTimeout(() => { splash.style.display = 'none'; }, 800);
   applyTheme(theme, false);
   renderAll();
 }
@@ -948,7 +948,7 @@ setTimeout(() => {
   if ($('splashscreen') && !$('splashscreen').classList.contains('hide')) {
     enterApp();
   }
-}, 5000);
+}, 3000);
 
 // ===== NAV =====
 function goNav(view, btn) {
