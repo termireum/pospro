@@ -124,7 +124,23 @@ input, select, textarea { font-family: inherit; }
 .splash-enter-btn:active { transform: scale(0.95); opacity: 0.85; }
 @keyframes splashPop { from { opacity:0; transform: scale(0.7) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
 @keyframes splashFade { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+#splashscreen {
+  /* ... properti lainnya tetap ... */
+  
+  /* Efek iOS: Opacity memudar, Transform mengecil (scale) */
+  /* Kurva cubic-bezier(0.4, 0, 0.2, 1) sangat mirip dengan standar Apple */
+  transition: 
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
+/* Saat splashscreen ditutup (tambahkan class ini via JS) */
+#splashscreen.fade-out {
+  opacity: 0;
+  transform: scale(1.1); /* Efek zoom masuk/keluar saat menghilang */
+  pointer-events: none;
+}
+  
 /* ===== LAYOUT ===== */
 .viewport { flex: 1; position: relative; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
 .view {
