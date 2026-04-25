@@ -510,7 +510,6 @@ canvas#sales-chart { width: 100% !important; max-height: 180px; }
 <div id="splashscreen">
   <div class="splash-logo">Caseer</div>
   <div class="splash-tagline">Kasir Modern untuk Usaha Anda</div>
-  <button class="splash-enter-btn" onclick="enterApp()">Masuk</button>
 </div>
 
 <div class="viewport" id="app-root" style="display:none;flex-direction:column;">
@@ -939,7 +938,7 @@ function enterApp() {
   const root = $('app-root');
   splash.classList.add('hide');
   root.style.display = 'flex';
-  setTimeout(() => { splash.style.display = 'none'; }, 600);
+  setTimeout(() => { splash.style.display = 'none'; }, 1000);
   applyTheme(theme, false);
   renderAll();
 }
@@ -949,7 +948,7 @@ setTimeout(() => {
   if ($('splashscreen') && !$('splashscreen').classList.contains('hide')) {
     enterApp();
   }
-}, 3000);
+}, 5000);
 
 // ===== NAV =====
 function goNav(view, btn) {
