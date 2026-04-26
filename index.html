@@ -99,24 +99,8 @@ input, select, textarea { font-family: inherit; }
         max-width: 480px;
     }
 }
-  .splash-logo span {
-  display: inline-block;
-  opacity: 0;
-  transform: scale(0.5) translateY(20px);
-  filter: blur(8px);
-  animation: letterMorph 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes letterMorph {
-  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
-}
-splashscreen.hide {
-  opacity: 0;
-  transform: scale(1.05);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  pointer-events: none;
-}
-  .splash-logo {
+#splashscreen.hide { opacity: 0; transform: scale(1.06); pointer-events: none; }
+.splash-logo {
   font-size: 52px; font-weight: 600;
   color: white; letter-spacing: -1px;
   font-family: 'Poppins', -apple-system, 'SF Pro Display', system-ui, sans-serif;
@@ -543,7 +527,6 @@ canvas#sales-chart { width: 100% !important; max-height: 180px; }
   .pay-methods { grid-template-columns: 1fr 1fr; }
 }
 </style>
-  <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -847,24 +830,43 @@ canvas#sales-chart { width: 100% !important; max-height: 180px; }
 
 <script>
 // ===== LICENSE SYSTEM =====
-// HMAC-SHA256 based license validation (obfuscated)
-const _LK = (function(){
-  // Valid license keys are HMAC-SHA256(secret, "CASEER_PREMIUM_"+key_suffix)
-  // Stored as base64 truncated. Keys are pre-computed server-side.
-  const validKeys = [
-    'CSRP-2024-XKQM-7739', 'CSRP-2024-PWNV-3821',
-    'CSRP-2025-HRTB-6604', 'CSRP-2025-ZJNW-9152',
-    'CSRP-2025-QKLV-4487', 'CSRP-2025-MNBX-7731',
-    'CSRP-2025-TYVP-2298', 'CSRP-2026-RKDQ-5566',
-    'CSRP-2026-WFMJ-8843', 'CSRP-2026-HPZN-1174',
-  ];
-  return { v: (k) => validKeys.includes(k.toUpperCase().trim()) };
-})();
+// Validasi berbasis HMAC-SHA256 — tidak ada list key disimpan di sini.
+// Algoritma HARUS sinkron dengan keygen.html.
+const _SECRET = 'CSR-2f8a1e9d-7b3c-4a6f-82e1-d9f0c3b5a741';
+
+async function _hmac(secret, message) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', keyMaterial, enc.encode(message));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function validateKey(key) {
+  try {
+    const k = key.toUpperCase().trim();
+    // Format: TYPE-YEAR-SUFFIX-CCCC  (contoh: CSRP-2025-XKQM-7739)
+    const parts = k.split('-');
+    if (parts.length !== 4) return false;
+    const [type, year, suffix, checksum] = parts;
+    // Validasi format dasar
+    if (!/^[A-Z]{4}$/.test(type)) return false;
+    if (!/^\d{4}$/.test(year)) return false;
+    if (!/^[A-Z]{4}$/.test(suffix)) return false;
+    if (!/^\d{4}$/.test(checksum)) return false;
+    // Hitung ulang checksum: HMAC('CASEER_SEED_' + keyBody)
+    const keyBody = `${type}-${year}-${suffix}`;
+    const preHash = await _hmac(_SECRET, 'CASEER_SEED_' + keyBody);
+    const computed = String(parseInt(preHash.substring(0, 4), 16) % 10000).padStart(4, '0');
+    return computed === checksum;
+  } catch { return false; }
+}
 
 function isPremium() {
   const stored = localStorage.getItem('caseer_license');
   if (!stored) return false;
-  try { const d = JSON.parse(stored); return d.active && _LK.v(d.key); } catch { return false; }
+  try { const d = JSON.parse(stored); return d.active === true; } catch { return false; }
 }
 
 const FREE_STOCK_LIMIT = 30;
@@ -2043,11 +2045,15 @@ function openModal(type) {
 }
 
 // ===== LICENSE ACTIVATION =====
-function activateLicense() {
+async function activateLicense() {
   const key = $('inp-license')?.value?.trim();
   if (!key) { showFieldError('inp-license'); return; }
-  if (_LK.v(key)) {
-    localStorage.setItem('caseer_license', JSON.stringify({ active: true, key, activated: new Date().toISOString() }));
+  const btn = document.querySelector('[onclick="activateLicense()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  const valid = await validateKey(key);
+  if (btn) { btn.disabled = false; btn.innerHTML = `<i data-lucide="crown"></i> ${lang==='ID'?'Aktifkan Premium':'Activate Premium'}`; lucide.createIcons(); }
+  if (valid) {
+    localStorage.setItem('caseer_license', JSON.stringify({ active: true, key: key.toUpperCase().trim(), activated: new Date().toISOString() }));
     closeModal();
     toast(lang==='ID'?'Premium berhasil diaktifkan! ⭐':'Premium activated! ⭐');
     renderSettings();
